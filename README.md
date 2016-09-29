@@ -14,6 +14,11 @@ Yahoo Finance API Brief Intro [here](http://meumobi.github.io/stocks%20apis/2016
 
 ## Yahoo API Query Limit ##
 
+### Yahoo Query Langugage Limitations ###
+There is an apparent delay of quotes, so the data fetched are not always real-time up to date.
+
+Currently I am looking into this issue and trying to integrate additional methods to get quotes.
+
 ### Private API Query Limit ###
 * limited to 20,000 requests per hour per IP
 * limited to a total of 100,000 requests per day per API Key.
