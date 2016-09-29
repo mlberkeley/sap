@@ -36,14 +36,6 @@ setup(
     description="Python module to get stock data from Yahoo! Finance",
     long_description=long_description,
 
-    # The project URL.
-    url='https://github.com/lukaszbanasiak/yahoo-finance',
-    download_url='https://github.com/lukaszbanasiak/yahoo-finance/releases',
-
-    # Author details
-    author='Lukasz Banasiak',
-    author_email='lukasz@banasiak.me',
-
     # Choose your license
     license='MIT',
 

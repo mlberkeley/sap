@@ -30,9 +30,6 @@ Hosted on GitHub: http://github.com/yahoo/yos-social-python/tree/master
   THE SOFTWARE.
 """
 
-__author__   = 'Dustin Whittle <dustin@yahoo-inc.com>'
-__version__  = '0.1'
-
 try:
     from http.client import HTTPConnection
 except ImportError:
