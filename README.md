@@ -28,7 +28,6 @@ Yahoo Finance API Brief Intro [here](http://meumobi.github.io/stocks%20apis/2016
 Using pip:
 
 ```
-#!shell
 
 $ pip install yahoo-finance
 ```
@@ -36,7 +35,6 @@ $ pip install yahoo-finance
 From development repo (requires git)
 
 ```
-#!shell
 $ git clone git://github.com/lukaszbanasiak/yahoo-finance.git
 $ cd yahoo-finance
 $ python setup.py install
@@ -102,18 +100,17 @@ To get the data_set, use ``.get_data_set()`` method. The data_set is in a dictio
 Example: EUR/PLN (EURPLN=X)
     
 ```
-#!shell
 
-    >>> from yahoo_finance import Currency
-    >>> eur_pln = Currency('EURPLN=X')
-    >>> print(eur_pln.get_bid())
-    '4.2007'
-    >>> print(eur_pln.get_ask())
-    '4.2091'
-    >>> print(eur_pln.get_rate())
-    '4.2049'
-    >>> print(eur_pln.get_trade_datetime())
-    '2014-03-05 11:23:00 UTC+0000'
+>>> from yahoo_finance import Currency
+>>> eur_pln = Currency('EURPLN=X')
+>>> print(eur_pln.get_bid())
+'4.2007'
+>>> print(eur_pln.get_ask())
+'4.2091'
+>>> print(eur_pln.get_rate())
+'4.2049'
+>>> print(eur_pln.get_trade_datetime())
+'2014-03-05 11:23:00 UTC+0000'
 ```
 
 
@@ -122,13 +119,12 @@ Refresh data from market
 
    
 ```
-#!shell
 
-    >>> eur_pln.refresh()
-    >>> print(eur_pln.get_rate())
-    '4.2052'
-    >>> print(eur_pln.get_trade_datetime())
-    '2014-03-05 11:27:00 UTC+0000'
+>>> eur_pln.refresh()
+>>> print(eur_pln.get_rate())
+'4.2052'
+>>> print(eur_pln.get_trade_datetime())
+'2014-03-05 11:27:00 UTC+0000'
 ```
 
 
@@ -137,16 +133,15 @@ Refresh data from market
 Example: Yahoo! Inc. (YHOO)
 
 ```
-#!shell
 
-    >>> from yahoo_finance import Share
-    >>> yahoo = Share('YHOO')
-    >>> print(yahoo.get_open())
-    '36.60'
-    >>> print(yahoo.get_price())
-    '36.84'
-    >>> print(yahoo.get_trade_datetime())
-    '2014-02-05 20:50:00 UTC+0000'
+>>> from yahoo_finance import Share
+>>> yahoo = Share('YHOO')
+>>> print(yahoo.get_open())
+'36.60'
+>>> print(yahoo.get_price())
+'36.84'
+>>> print(yahoo.get_trade_datetime())
+'2014-02-05 20:50:00 UTC+0000'
 ```
 
 
@@ -154,13 +149,12 @@ Example: Yahoo! Inc. (YHOO)
 Refresh data from market
   
 ```
-#!shell
 
-    >>> yahoo.refresh()
-    >>> print(yahoo.get_price())
-    '36.87'
-    >>> print(yahoo.get_trade_datetime())
-    '2014-02-05 21:00:00 UTC+0000'
+>>> yahoo.refresh()
+>>> print(yahoo.get_price())
+'36.87'
+>>> print(yahoo.get_trade_datetime())
+'2014-02-05 21:00:00 UTC+0000'
 ```
 
 Historical data
@@ -168,60 +162,57 @@ Historical data
 
    
 ```
-#!shell
 
-    >>> print(yahoo.get_historical('2014-04-25', '2014-04-29'))
-    [{u'Volume': u'28720000', u'Symbol': u'YHOO', u'Adj_Close': u'35.83', u'High': u'35.89', u'Low': u'34.12', u'Date': u'2014-04-29', u'Close': u'35.83', u'Open': u'34.37'}, {u'Volume': u'30422000', u'Symbol': u'YHOO', u'Adj_Close': u'33.99', u'High': u'35.00', u'Low': u'33.65', u'Date': u'2014-04-28', u'Close': u'33.99', u'Open': u'34.67'}, {u'Volume': u'19391100', u'Symbol': u'YHOO', u'Adj_Close': u'34.48', u'High': u'35.10', u'Low': u'34.29', u'Date': u'2014-04-25', u'Close': u'34.48', u'Open': u'35.03'}]
+>>> print(yahoo.get_historical('2014-04-25', '2014-04-29'))
+[{u'Volume': u'28720000', u'Symbol': u'YHOO', u'Adj_Close': u'35.83', u'High': u'35.89', u'Low': u'34.12', u'Date': u'2014-04-29', u'Close': u'35.83', u'Open': u'34.37'}, {u'Volume': u'30422000', u'Symbol': u'YHOO', u'Adj_Close': u'33.99', u'High': u'35.00', u'Low': u'33.65', u'Date': u'2014-04-28', u'Close': u'33.99', u'Open': u'34.67'}, {u'Volume': u'19391100', u'Symbol': u'YHOO', u'Adj_Close': u'34.48', u'High': u'35.10', u'Low': u'34.29', u'Date': u'2014-04-25', u'Close': u'34.48', u'Open': u'35.03'}]
 ```
 
 More readable output :)
 
 ```
-#!shell
 
 
-    >>> from pprint import pprint
-    >>> pprint(yahoo.get_historical('2014-04-25', '2014-04-29'))
-    [{u'Adj_Close': u'35.83',
-      u'Close': u'35.83',
-      u'Date': u'2014-04-29',
-      u'High': u'35.89',
-      u'Low': u'34.12',
-      u'Open': u'34.37',
-      u'Symbol': u'YHOO',
-      u'Volume': u'28720000'},
-     {u'Adj_Close': u'33.99',
-      u'Close': u'33.99',
-      u'Date': u'2014-04-28',
-      u'High': u'35.00',
-      u'Low': u'33.65',
-      u'Open': u'34.67',
-      u'Symbol': u'YHOO',
-      u'Volume': u'30422000'},
-     {u'Adj_Close': u'34.48',
-      u'Close': u'34.48',
-      u'Date': u'2014-04-25',
-      u'High': u'35.10',
-      u'Low': u'34.29',
-      u'Open': u'35.03',
-      u'Symbol': u'YHOO',
-      u'Volume': u'19391100'}]
+>>> from pprint import pprint
+>>> pprint(yahoo.get_historical('2014-04-25', '2014-04-29'))
+[{u'Adj_Close': u'35.83',
+  u'Close': u'35.83',
+  u'Date': u'2014-04-29',
+  u'High': u'35.89',
+  u'Low': u'34.12',
+  u'Open': u'34.37',
+  u'Symbol': u'YHOO',
+  u'Volume': u'28720000'},
+ {u'Adj_Close': u'33.99',
+  u'Close': u'33.99',
+  u'Date': u'2014-04-28',
+  u'High': u'35.00',
+  u'Low': u'33.65',
+  u'Open': u'34.67',
+  u'Symbol': u'YHOO',
+  u'Volume': u'30422000'},
+ {u'Adj_Close': u'34.48',
+  u'Close': u'34.48',
+  u'Date': u'2014-04-25',
+  u'High': u'35.10',
+  u'Low': u'34.29',
+  u'Open': u'35.03',
+  u'Symbol': u'YHOO',
+  u'Volume': u'19391100'}]
 ```
 
 Summary information for our example
 
   
 ```
-#!shell
 
-    >>> from pprint import pprint
-    >>> pprint(yahoo.get_info())
-    {u'FullTimeEmployees': u'12200',
-     u'Industry': u'Internet Information Providers',
-     u'Sector': u'Technology',
-     u'end': u'2014-05-03',
-     u'start': u'1996-04-12',
-     u'symbol': u'YHOO'}
+>>> from pprint import pprint
+>>> pprint(yahoo.get_info())
+{u'FullTimeEmployees': u'12200',
+ u'Industry': u'Internet Information Providers',
+ u'Sector': u'Technology',
+ u'end': u'2014-05-03',
+ u'start': u'1996-04-12',
+ u'symbol': u'YHOO'}
 ```
 
 Requirements
