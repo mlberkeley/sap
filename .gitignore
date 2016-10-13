@@ -1,6 +1,6 @@
 *.tar.gz
 *.pyc
-*.pyc
+*.pyx
 *.log
 *.sw*
 *.so
