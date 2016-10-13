@@ -20,11 +20,30 @@ if __name__ == '__main__':
   if len(sys.argv) > 3:
     datanum = int(sys.argv[3])
 
+  classes, X, Y, X_, Y_ = load_images()
+
+  N = X.shape[0]
+  if datanum < N:
+    sample = np.random.choice(N, size=datanum, replace=False)   
+    X = X[sample]
+    Y = Y[sample]
+
+  D = X.shape[1]
+  H = X.shape[2]
+  W = X.shape[3]
+  N_ = X_.shape[0]
+
+  """ split imgs into smaller chunks """
+  X = np.split(X, datanum)
+  Y = np.split(Y, datanum)
+  X_ = np.split(X_, X_.shape[0])
+  Y_ = np.split(Y_, Y_.shape[0])
+
   """ set classifiers """
   classifiers = {
-    'linear': LinearClassifier(3, 32, 32, 10, 20),
-    'nn'    : NNClassifier(3, 32, 32, 10, 5),
-    'cnn'   : CNNClassifier(3, 32, 32, 10, 3),
+    'linear': LinearClassifier(D, H, W, len(classes), 200),
+    'nn'    : NNClassifier(D, H, W, len(classes), 50),
+    'cnn'   : CNNClassifier(D, H, W, len(classes), 10),
   }
   classifier = classifiers[name]
 
@@ -39,8 +58,10 @@ if __name__ == '__main__':
   conf.set("spark.task.cpus", "4")
   conf.set("spark.akka.frameSize", str(int(datanum * 0.025)))
   sc = SparkContext(master=master, environment={'PYTHONPATH':os.getcwd()}, conf=conf)
-  trainData = sc.pickleFile("s3n://61c-cnn/" + data, 320)
-  testData = sc.pickleFile("s3n://61c-cnn/test", 320)
+
+  """ set spark context and RDDs """
+  trainData = sc.parallelize(zip(xrange(datanum), zip(X, Y)))
+  testData = sc.parallelize(zip(xrange(N_), zip(X_, Y_)))
 
   """ run clssifier """
   log = open('ec2-' + name + data.strip('train') + '.log', 'w')
@@ -56,5 +77,7 @@ if __name__ == '__main__':
     ((datanum * classifier.iternum) / (e1 - s))
   print '[CS61C Project 4] time elapsed: %.2f min' % ((e2 - s) / 60.0)
 
+  trainData.unpersist()
+  testData.unpersist()
   sc.stop()
   log.close()
