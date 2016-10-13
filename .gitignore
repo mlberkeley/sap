@@ -1,0 +1,8 @@
+*.tar.gz
+*.pyc
+*.pyc
+*.log
+*.sw*
+*.so
+test
+dump
