@@ -7,13 +7,11 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('stock-v1')
 
 # Parameters Initialization
-stocks = ['AAPL', 'GOOG', 'SPY', 'YHOO']
-    #stocks = open("nasdaqSymbols.txt", "r").read().split("\n")
+stocks = open("symbols.txt", "r").read().split("\n")
 
 urlPrefix = "http://www.bloomberg.com/markets/api/bulk-time-series/price/"
 urlAffix = "%3AUS?timeFrame="
 options = ["1_DAY"]
-    #options = ["1_DAY", "1_MONTH", "1_YEAR", "5_YEAR"]
 
 i = 0
 while i < len(stocks):

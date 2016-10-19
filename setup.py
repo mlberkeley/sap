@@ -35,5 +35,3 @@ table = dynamodb.create_table(
 
 # Wait until the table exists.
 table.meta.client.get_waiter('table_exists').wait(TableName='users')
-
-print("table created.")
