@@ -21,15 +21,15 @@ today = str(time.mktime(datetime.date.today().timetuple()))
 
 
 i = 0
-with table.batch_writer(overwrite_by_pkeys=['symbol', 'timestamp']) as batch:
-    while i < len(stocks):
-        symbol = stocks[i]
-        url = urlPrefix + symbol + url2 + today + url3 + interval + url4
-        htmltext = urllib.request.urlopen(url).read().decode('utf8')
-        try:
-            print("adding values for " + symbol +" stock quotes ... ")
-            data = json.loads(htmltext)["chart"]["result"][0]
-            quote = data["indicators"]["quote"][0]
+while i < len(stocks):
+    symbol = stocks[i]
+    url = urlPrefix + symbol + url2 + today + url3 + interval + url4
+    htmltext = urllib.request.urlopen(url).read().decode('utf8')
+    try:
+        print("adding values for " + symbol +" stock quotes ... ")
+        data = json.loads(htmltext)["chart"]["result"][0]
+        quote = data["indicators"]["quote"][0]
+        with table.batch_writer(overwrite_by_pkeys=['symbol', 'timestamp']) as batch:
             for j in range(len(data["timestamp"])):
                 _timestamp = str(data["timestamp"][j])
                 _close = str(quote["close"][j])
@@ -50,8 +50,8 @@ with table.batch_writer(overwrite_by_pkeys=['symbol', 'timestamp']) as batch:
                                 'volume': _volume
                             }
                         )
-            print("success \n")
-        except Exception as e:
-            print(str(e))
-        i += 1
+        print("success \n")
+    except Exception as e:
+        print(str(e))
+    i += 1
 
