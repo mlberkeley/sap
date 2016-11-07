@@ -1,0 +1,89 @@
+\documentclass[11pt]{exam}
+\noprintanswers
+\usepackage{array,multirow,graphicx}
+\graphicspath{ {images/} }
+\usepackage{amsmath,amssymb,amsthm,bm,hyperref, enumitem}
+\usepackage[parfill]{parskip}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{pdfpages}
+\newtheoremstyle{quest}{\topsep}{\topsep}{}{}{\bfseries}{}{ }{\thmname{#1}\thmnote{ #3}.}
+\theoremstyle{quest}
+\newtheorem*{definition}{Definition}
+\newtheorem*{theorem}{Theorem}
+\newtheorem*{question}{Problem}
+\newtheorem*{exercise}{Exercise}
+\newtheorem*{challengeproblem}{Challenge Problem}
+
+\newcommand{\name}{ML@B}
+
+% \title{
+% \Large \name
+% \\\vspace{10pt}
+% \\\vspace{10pt}
+% \duedate
+% \author{Phillip Kuznetsov}
+% }
+
+
+\markright{\name\hfill Homework \hw\hfill}
+
+%% If you want to define a new command, you can do it like this:
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\norm}[2]{\|#1\|_#2}
+\newcommand{\deriv}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\sign}[1]{\text{sign}(#1)}
+\newcommand{\supp}[2]{#1^{(#2)}}
+\newcommand{\ddelta}[2]{\supp{#1}{#2}}
+%% If you want to use a function like ''sin'' or ''cos'', you can do it like this
+%% (we probably won't have much use for this)
+% \DeclareMathOperator{\sin}{sin}   %% just an example (it's already defined)
+
+\begin{document}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=5cm]{brain}\\
+    \Large ML@B\\
+    SAP Algorithm Outline
+\end{figure}
+% \maketitle
+\vspace{}
+Notation:
+\begin{itemize}
+    \item $D$: Data matrix \\
+    \begin{itemize}
+        \item $D_i$: Datapoint with format $\{\text{close price} - \text{open price}, \text{low}, \text{high}, \text{volume},F_{i-1}\}$
+    \end{itemize}
+    \item $F$: Trade value% TODO add possible values \\
+    \begin{itemize}
+        \item $F_i = D \cdot \Theta = D_{i0}\Theta_0 + D_{i1}\Theta_1 +D_{i2}\Theta_2 +D_{i3}\Theta_3 +D_{i4}\Theta_4$
+        \item The 0th - 3rd components are calculated at initialization, the fourth component is calculated later
+        \item $F_i^\prime =  D_{i0}\Theta_0 + D_{i1}\Theta_1 +D_{i2}\Theta_2 +D_{i3}\Theta_3$
+        \item $F_i = F_i^\prime + \Theta_4 F_{i-1} = \sum_{j=0}^i \Theta_4^{i-j} F_i^\prime$
+
+    \end{itemize}
+    \item $R_i$: The reward function at time step $i$
+    \begin{itemize}
+        \item $R_i = F_i D_0 - \partial(F_i - F_{i-1})$
+    \end{itemize}
+    \item Gradient Equations
+    \begin{itemize}
+        \item $$\deriv{R_t}{F_t} = \left\{\begin{matrix}
+-1 \text{ if } F_{t-1} < F_t \\
++1 \text{ else}
+\end{matrix}\right$$
+        \item $$\deriv{R_t}{F_{t-1}} =D_{t0}-  \left\{\begin{matrix}
+-1 \text{ if } F_{t-1} < F_t \\
++1 \text{ else}
+\end{matrix}\right = D_{t0} - \deriv{R_t}{F_t}$$
+
+        \item $$\deriv{F_{t}}{\Theta} = D_t$$
+        \item $$\deriv{U_{t}}{\Theta} = \sum_{i=1}^t \deriv{U_t}{R_t}\left(\deriv{R_t}{F_t}\deriv{F_{t}}{\Theta} + \deriv{R_t}{F_{t-1}}\deriv{F_{t-1}}{\Theta} \right)
+    \end{itemize}
+    \item $U$: % TODO add u stuff
+
+\end{itemize}
+\end{document}
