@@ -3,10 +3,11 @@
 # store in f_now, s.t. f_now[i] is d_0*theta0 + d_1*theta1 + ... + d_3*theta3
 
 from pyspark.sql import *
-
-d_0 = d_dataframe.col(0).map(lambda x: theta0 * x)
-d_1 = d_dataframe.col(1).map(lambda x: theta1 * x)
-d_2 = d_dataframe.col(2).map(lambda x: theta2 * x)
-
-df_update = sqlContext.createDataFrame(d_0, d_1, d_2)
-df_update = df_update.withColumn('f_now', df_update.col('d_0') + df_update.col('d_1') + df_update.col('d_2'))
+from pyspark import SparkContext
+sc = SparkContext()
+sql = SQLContext(sc)
+df = sql.createDataFrame([(1, 2, 3), (4, 5, 6), (7, 8, 9)], ['0', '1', '2'])
+theta0, theta1, theta2 = 5, 6,7 
+df_update = df.select((df['0'] * theta0).alias('0'), (df['1']*theta1).alias('1'),(df['2']*theta2).alias('2'))
+newdf = df_update.withColumn('f_now', sum(df_update[col] for col in df_update.columns))
+newdf = newdf.select('f_now').show()
