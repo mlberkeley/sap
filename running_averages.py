@@ -24,9 +24,9 @@ df_decay_r_r2 = df_r.select(F.col('index'), (F.lit(eta) * F.pow(F.lit(eta), F.li
 # calculate all eta * (1 - eta)^(n - 1 - row_number) * R and eta * (1 - eta)^(n - 1 - row_number) * R^2
 df_decayed_r_r2 = df_decay_r_r2.select(F.col('index'), (F.col('decay') * F.col('R')).alias('R_decay'), (F.col('decay') * F.col('R2')).alias('R2_decay'))
 
-w = Window.orderBy('index').rangeBetween(-sys.maxsize, 0)
 
-# generates the cumulative updates to prev_A, prev_B
+# generates the cumulative updates to prev_A, prev_B with a scan
+w = Window.orderBy('index').rangeBetween(-sys.maxsize, 0)
 deltaA_deltaB = df_decayed_r_r2.select(F.col('index'), F.sum('R_decay').over(w).alias('A_update'), F.sum('R2_decay').over(w).alias('B_update'))
 
 # selects decay for A and B: decay = (1 - eta)^(n - row_number)
