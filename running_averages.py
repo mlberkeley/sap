@@ -4,19 +4,20 @@ from pyspark.sql import SQLContext, functions as F
 sc = SparkContext()
 sqlContext = SQLContext(sc)
 
-df = sqlContext
+eta = 0.5
 
-eta = 0.1
+# sqlContext.sql("CREATE TABLE R_Table (R float)");
+# df_r = sqlContext.sql('SELECT R FROM R_Table')
 
-df_r = sqlContext.sql('SELECT R FROM R_Table')
-prev_A_B = createDataFrame([(-1, 0, 0)], ['index', 'A', 'B'])
+df_r = sqlContext.createDataFrame([(1, 1), (2, 1), (3, 3), (4, 2), (5, 4)], ['index', 'R'])
+prev_A_B = sqlContext.createDataFrame([(-1, 0, 0)], ['index', 'A', 'B'])
 n = df_r.count()
 
 # CHECK: Assumes dataframes are sorted from least recent to most recent
 # selects R, R2, and decay = eta * (1 - eta)^(n - 1 - row_number)
-df_decay_r_r2 = df_r.select(F.row_number().alias('index'), (F.lit(eta) * F.pow(F.lit(eta), F.lit(n - 1) - F.row_number())).alias('decay'), F.col('R'), (F.col('R') * F.col('R')).alias('R2'))
+df_decay_r_r2 = df_r.select(F.col('index'), (F.lit(eta) * F.pow(F.lit(eta), F.lit(n - 1) - F.col('index'))).alias('decay'), F.col('R'), (F.col('R') * F.col('R')).alias('R2'))
 # calculate all eta * (1 - eta)^(n - 1 - row_number) * R and eta * (1 - eta)^(n - 1 - row_number) * R^2
-df_decayed_r_r2 = df_decayed_r_r2.select(F.col('index'), (F.col('decay') * F.col('R')).alias('R_decay'), (F.col('decay') * F.col('R2')).alias('R2_decay'))
+df_decayed_r_r2 = df_decay_r_r2.select(F.col('index'), (F.col('decay') * F.col('R')).alias('R_decay'), (F.col('decay') * F.col('R2')).alias('R2_decay'))
 # generates the cumulative updates to prev_A, prev_B
 deltaA_deltaB = scan(df_decayed_r_r2)
 
