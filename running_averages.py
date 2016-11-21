@@ -2,9 +2,15 @@ from pyspark import SparkContext
 from pyspark.sql import SQLContext, functions as F
 from pyspark.sql.window import Window
 import sys
+import time
+import numpy as np
+
+start = time.clock()
 
 sc = SparkContext()
 sqlContext = SQLContext(sc)
+
+N = 1000000
 
 eta = 0.75
 
@@ -13,7 +19,8 @@ eta = 0.75
 prev_a = 2
 prev_b = 5
 
-df_r = sqlContext.createDataFrame([(1, 1), (2, 1), (3, 3), (4, 2), (5, 4)], ['index', 'R'])
+df_r = sqlContext.createDataFrame(list(enumerate([int(i) for i in np.random.choice(2, N)])), ['index', 'R'])
+# df_r = sqlContext.createDataFrame([(1, 1), (2, 1), (3, 3), (4, 2), (5, 4)], ['index', 'R'])
 df_prev_a_b = sqlContext.createDataFrame([(0, prev_a, prev_b)], ['index', 'A', 'B'])
 n = df_r.count()
 
@@ -32,3 +39,6 @@ df_decays = df_decays.alias('df_decays')
 
 # Calculate dS_deta. Do a join between the t-th point and the (t-1)-th point for the two timesteps in the formula
 dS_deta = df_a_b.join(df_decays, F.col('df_a_b.index') + 1 == F.col('df_decays.index')).select(F.col('df_a_b.index'), ((F.col('B') * (F.col('R') - F.col('A')) - 0.5 * F.col('A') * (F.col('R2') - F.col('B'))) / F.pow(F.col('B') - F.col('A') * F.col('A'), 1.5)).alias('dS_deta'))
+dS_deta.show()
+
+print('TIME ELAPSED:', time.clock() - start)
