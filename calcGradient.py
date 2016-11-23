@@ -25,11 +25,11 @@ df = sqlContext.createDataFrame([[i] + list([int(x) for x in arr]) for i, arr in
 w = Window.orderBy('index').rowsBetween(-1, -1)
 
 df_2 = df.select('index', F.col('D').alias('D_i'), F.lag('D', default=0).over(w).alias('D_i-1'), F.col('F').alias('F_i'), F.lag('F', default=0).over(w).alias('F_i-1'), 'close', 'open', 'dU_dR')
-dU_dtheta_i = df_2.select('index', (F.col('dU_dR') * (F.signum(F.col('F_i-1') - F.col('F_i')) * F.col('D_i') + (F.col('close') - F.col('open') - F.signum(F.col('F_i-1') - F.col('F_i'))) * F.col('D_i-1'))).alias('dU_dtheta'))
+df_2 = df_2.withColumn('dR_dF', F.signum(F.col('F_i-1') - F.col('F_i')))
+dU_dtheta_i = df_2.select('index', (F.col('dU_dR') * (F.col('dR_dF') * F.col('D_i') + (F.col('close') - F.col('open') - F.col('dR_dF')) * F.col('D_i-1'))).alias('dU_dtheta'))
 
 dU_dtheta = dU_dtheta_i.groupBy().sum()
 
 df_2.show()
 dU_dtheta_i.show()
 dU_dtheta.show()
-print('dU_dtheta:', dU_dtheta)
