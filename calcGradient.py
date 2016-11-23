@@ -1,20 +1,30 @@
-################
-# PLACEHOLDERS #
-################
-# dataframe2 := dataframe contains: | i | D[i] | D[i-1] | f[i] | f[i-1] | close[i] | open[i] |... for i in [1,n]
+from pyspark import SparkContext
+from pyspark.sql import SQLContext, functions as F
+from pyspark.sql.window import Window
+import sys
+import time
+import numpy as np
 
-# part 5
+sc = SparkContext()
+sqlContext = SQLContext(sc)
 
-# helper function =2u(t)-1 where u is heaviside step
-sgn = lambda x: 1 if x>0 else -1
+N = 5
+
+# dataframe2 := dataframe contains: | i | D[i] | f[i] | close[i] | open[i] | dU[i]/dR[i] for i in [1,n]
+
+df = sqlContext.createDataFrame([[i] + list([int(x) for x in arr]) for i, arr in enumerate(np.random.choice(5, (N, 5)))], ['index', 'D', 'F', 'close', 'open', 'dU_dR'])
 
 # These values are needed nowhere else; we don't need to bother computing them
 
-#dR_tdf_t = heavi2(f[t-1]-f[t])
-#dR_tdf_t_1 = close[t] - open[t] -dR_tdf_t
-#df_t_1dtheta = D_t_1
-#df_tdtheta = D_t
-#dU_tdtheta=sum((dR_tdf_t)*(df_tdtheta) + (dR_tdf_t_1)*(df_t_1dtheta)))
+# $$\frac{dU_T}{d\theta}=\sum_{t=1}^T \frac{dU_T}{dR_t} ((\frac{dR_t}{df_t})*(\frac{df_t}{d\theta}) + (\frac{dR_t}{df_{t-1}})*(\frac{df_{t-1}}{d\theta})) $$
+# $$dR_t/df_t = sgn(f[t-1]-f[t])$$
+# $$dR_t/df_{t-1} = close[t] - open[t] -dR_t/df_t$$
+# $$df_{t-1}/d\theta = D_{t-1}$$
+# $$df_t/d\theta = D_t$$
 
-# $\frac{dU_T}{d\theta}=\sum_{t=1}^T \frac{dU_T}{dR_t} ((\frac{dR_t}{df_t})*(\frac{df_t}{d\theta}) + (\frac{dR_t}{df_{t-1}})*(\frac{df_{t-1}}{dtheta})) $
-dUdtheta = dataframe2.map(lambda x: x['dU[i]/dR[i]']*(sgn(x['f[i-1]']-x['f[i]'])*x['D[i]'] + (x['close[i]']-x['open[i]']-sgn(x['f[i-1]']-x['f[i]']))*x['D[i-1]']))
+w = Window.orderBy('index').rowsBetween(-1, -1)
+
+df_2 = df.select('index', F.col('D').alias('D_i'), F.lag('D', default=0).over(w).alias('D_i-1'), F.col('F').alias('F_i'), F.lag('F', default=0).over(w).alias('F_i-1'), 'close', 'open', 'dU_dR')
+dU_dtheta = df_2.select('index', (F.col('dU_dR') * (F.signum(F.col('F_i-1') - F.col('F_i')) * F.col('D_i') + (F.col('close') - F.col('open') - F.signum(F.col('F_i-1') - F.col('F_i'))) * F.col('D_i-1'))).alias('dU_dtheta'))
+df_2.show()
+dU_dtheta.show()
