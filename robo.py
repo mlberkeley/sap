@@ -7,7 +7,7 @@ from pyspark.sql import SQLContext, functions as F
 from pyspark import SparkContext
 from pyspark.sql.window import Window
 import sys
-
+from scan_reward import reward
 
 # In[2]:
 
@@ -24,10 +24,10 @@ fprime=-3
 # In[3]:
 
 
-df = sql.createDataFrame([(1, 1, 2, 3, 10), (2, 4, 5, 6,11), (3, 7, 8, 9, 12)], ['index', '0', '1', '2', '3'])
+df = sql.createDataFrame([(1, 1, 2, 3, 10), (2, 4, 5, 6,11), (3, 7, 8, 9, 12)], ['index', 'open', 'close', 'high', 'low'])
 zerodf = sql.createDataFrame([(0,0,)], ['index','fprime'])
 
-df_update = df.select('index',(df['0'] * theta0).alias('0'), (df['1']*theta1).alias('1'),(df['2']*theta2).alias('2'), (df['3']*theta3).alias('3'))
+df_update = df.select('index',(df['open'] * theta0).alias('open'), (df['close']*theta1).alias('close'),(df['high']*theta2).alias('high'), (df['low']*theta3).alias('low'))
 fprime = df_update.withColumn('fprime', sum(df_update[col] for col in df_update.columns[1:]))
 
 fprime = fprime.select('index','fprime')
@@ -56,7 +56,10 @@ Fhat = Fhat.select('index', ( F.sum('fprimef').over(w_scan) * F.col('r')).alias(
 
 # take the difference between the value and previous value
 w_lag = Window.orderBy('index').rowsBetween(-1, -1)
-Fdif = Fhat.select('index', F.col('Fhat') - F.lag('Fhat', default=0).over(w_lag))
-Fdif.show()
+Fdif = Fhat.select('index', F.col('Fhat').alias('F'), (F.col('Fhat') - F.lag('Fhat', default=0).over(w_lag)).alias('lagF'))
+
+# Calculate the reward
+rewarddf = reward(df, Fdif)
+rewarddf.show()
 
 # In[ ]:
