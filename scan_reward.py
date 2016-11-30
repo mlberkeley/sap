@@ -6,7 +6,6 @@
 from pyspark.sql import functions as F
 
 
-
 ''' Calculate: R_i = F_(i-1) * (close_i - open_i) - delta * |F_i - F_(i-1)| '''
 def reward(data, dfF, delta=0.1):
     '''
@@ -19,19 +18,24 @@ def reward(data, dfF, delta=0.1):
     # Assume the column in Fi_1 dataframe is: "F2"
     data = data.alias('data')
     dfF = dfF.alias('dfF')
-    df = data.join(dfF, F.col('data.index')== F.col('dfF.index')).select(
+    df = data.join(dfF, F.col('data.index')== F.col('dfF.index')).select(F.col('dfF.index').alias('index')
         ((F.col('data.close') - F.col('data.open')) \
         * F.col('dfF.lagF') \
-        - delta * F.abs(F.col('dfF.lagF'))).alias('reward') )
+        - delta * F.abs('dfF.lagF')).alias('R') )
 
     return df
 
 def test():
     from pyspark import SparkContext
     from pyspark.sql import SQLContext
-
+    import random
     sc = SparkContext()
-    sql = SQLContext(sc)
-
-    df = sql.createDataFrame([(10, 2, 3, 4, 6), (20, 15, 3, 24, 15), (22, 32, 1, 7, 3)], ['close','open','delta','F1','F2'])
-    reward(df)
+    sqlContext = SQLContext(sc)
+    columns = ['index', 'D', 'F', 'close', 'open']
+    N = 5
+    # dataframe2 := dataframe contains: | i | D[i] | f[i] | close[i] | open[i] | dU[i]/dR[i] for i in [1,n]
+    df = sqlContext.createDataFrame([[i] + [random.randint(0,4) for _ in range(len(columns) - 1)] for i in range(N)], columns)
+    dfF = sqlContext.createDataFrame([[i]+ [random.randint(0,4) for _ in range(2)] for i in range(N)], ['index', 'F', 'lagF'])
+    reward(df, dfF)
+if __name__ == "__main__":
+    test()

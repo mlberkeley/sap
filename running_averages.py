@@ -43,7 +43,7 @@ def test():
     sqlContext = SQLContext(sc)
 
 
-
+    
     df_r = sqlContext.createDataFrame(list(enumerate([random.randint(0,1) for i in range(N)])), ['index', 'R'])
     running_averages(df_r, sqlContext).show()
 if __name__ == "__main__":
