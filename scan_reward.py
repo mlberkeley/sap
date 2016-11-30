@@ -14,15 +14,12 @@ def reward(data, dfF, delta=0.1):
     :data - Dataframe that contains 'close', 'open' and 'delta'
     :dfF - DataFrame that contains the lag
     '''
-    # Assume the column for Fi dataframe is: "F1"
-    # Assume the column in Fi_1 dataframe is: "F2"
     data = data.alias('data')
     dfF = dfF.alias('dfF')
-    df = data.join(dfF, F.col('data.index')== F.col('dfF.index')).select(F.col('dfF.index').alias('index')
+    df = data.join(dfF, F.col('data.index') == F.col('dfF.index')).select(F.col('dfF.index').alias('index'),
         ((F.col('data.close') - F.col('data.open')) \
         * F.col('dfF.lagF') \
-        - delta * F.abs('dfF.lagF')).alias('R') )
-
+        - delta * F.abs(F.col('dfF.lagF'))).alias('R'))
     return df
 
 def test():
@@ -36,6 +33,7 @@ def test():
     # dataframe2 := dataframe contains: | i | D[i] | f[i] | close[i] | open[i] | dU[i]/dR[i] for i in [1,n]
     df = sqlContext.createDataFrame([[i] + [random.randint(0,4) for _ in range(len(columns) - 1)] for i in range(N)], columns)
     dfF = sqlContext.createDataFrame([[i]+ [random.randint(0,4) for _ in range(2)] for i in range(N)], ['index', 'F', 'lagF'])
-    reward(df, dfF)
+    reward(df, dfF).show()
+
 if __name__ == "__main__":
     test()
