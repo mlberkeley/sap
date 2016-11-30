@@ -19,7 +19,7 @@ def reward(data, dfF, delta=0.1):
     df = data.join(dfF, F.col('data.index') == F.col('dfF.index')).select(F.col('dfF.index').alias('index'),
         ((F.col('data.close') - F.col('data.open')) \
         * F.col('dfF.lagF') \
-        - delta * F.abs(F.col('dfF.lagF'))).alias('R'))
+        - delta * F.abs(F.col('dfF.F') - F.col('dfF.lagF'))).alias('R'))
     return df
 
 def test():
