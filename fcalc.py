@@ -35,6 +35,7 @@ def fcalc(df, theta, fprime, sqlContext):
     w_lag = Window.orderBy('index').rowsBetween(-1, -1)
     Fdif = Fhat.select('index', F.col('Fhat').alias('F'), (F.col('Fhat') - F.lag('Fhat', default=0).over(w_lag)).alias('lagF'))
     return Fdif
+
 def test():
     from pyspark import SparkContext
     from pyspark.sql import SQLContext
@@ -50,5 +51,6 @@ def test():
     df = sql.createDataFrame([[i] + [random.randint(0,4) for _ in range(len(columns) - 1)] for i in range(N)], columns)
     fprime = sql.createDataFrame([[i,random.randint(0,1)] for i in range(N)], ['index', 'fprime'])
     fcalc(df, theta, fprime, sql).show()
+    
 if __name__ == "__main__":
     test()
