@@ -59,31 +59,47 @@ Notation:
     \end{itemize}
     \item $F$: Trade value% TODO add possible values \\
     \begin{itemize}
-        \item $F_i = D_i \cdot \Theta = D_{i0}\Theta_0 + D_{i1}\Theta_1 +D_{i2}\Theta_2 +D_{i3}\Theta_3 +D_{i4}\Theta_4$
-        \item The 0th - 3rd components are calculated at initialization, the fourth component is calculated later
-        \item $F_i^\prime =  D_{i0}\Theta_0 + D_{i1}\Theta_1 +D_{i2}\Theta_2 +D_{i3}\Theta_3$
-        \item $F_i = F_i^\prime + \Theta_4 F_{i-1} = \sum_{j=0}^i \Theta_4^{i-j} F_j^\prime$
+        \item $F_i = D_i \cdot \Theta = D_{i_0}\Theta_0 + D_{i_1}\Theta_1 +D_{i_2}\Theta_2 +D_{i_3}\Theta_3 +D_{i_4}\Theta_4$
+        \item The 0th - 3rd components are calculated at initialization, the fourth component is calculated later. $D_{i_4}$ is $F_{i-1}$ which is currently not fully calculated.
+        \item $F_i^\prime =  D_{i_0}\Theta_0 + D_{i_1}\Theta_1 +D_{i_2}\Theta_2 +D_{i_3}\Theta_3$
+        \item $F_i = F_i^\prime + \Theta_4 F_{i-1} = \sum_{j=0}^i \Theta_4^{i-j} F_j^\prime$ (This form is very similar to the Prefix Sum)
 
     \end{itemize}
     \item $R_i$: The reward function at time step $i$
     \begin{itemize}
-        \item $R_i = F_i D_0 - \delta|F_i - F_{i-1}|$
+        \item $R_i = F_{i-1} D_0 - \delta|F_i - F_{i-1}|$
     \end{itemize}
-    \item Gradient Equations
+    \item $S^\prime$: The Differential Sharpe ratio % TODO add u stuff
+    \begin{itemize}
+        \item $S$ the Sharp ratio is obtained by considering $S_T=\frac{\text{Average}(R_t)}{\text{Standard Deviation}(R_t)}$
+        \item $S^\prime $ is obtained by considering exponential moving averages of the returns and standard deviation of returns above, and expanding to first order in the decay rate $\eta$:
+        \item $$\deriv{S_{t}}{\eta} = \frac{B_{t-1}\Delta A_t - \frac{1}{2}A_{t-1}\Delta B_t}{(B_{t-1}-A_{t-1}^2)^{3/2}}$$
+        \item $A_t = A_{t-1} + \eta \Delta A_t = A_{t-1} + \eta (R_t - A_{t-1})$
+        \item $B_t = B_{t-1} + \eta \Delta B_t = B_{t-1} + \eta (R_t^2 - B_{t-1})$
+    \end{itemize}
+    \item Performance function
+    \begin{itemize}
+        \item Want to maximize performance functions instead of minimizing a cost function
+        \item $U_T = U(R_1,R_2,\cdot,R_t)$ is the cumulative result of the differential sharpe ratio
+        \item For on-line learning we'll only worry about $\deriv{U_t}{R_t}$ which is the differential sharpe ratio for only the current timestep
+    \end{itemize}
+    \item Gradient Equations Derived from Above
     \begin{itemize}
         \item $$\deriv{R_t}{F_t} = \left\{\begin{matrix}
 -1 \text{ if } F_{t-1} < F_t \\
 +1 \text{ else}
 \end{matrix}\right$$
-        \item $$\deriv{R_t}{F_{t-1}} =D_{t0}-  \left\{\begin{matrix}
+        \item $$\deriv{R_t}{F_{t-1}} =D_{t_0}-  \left\{\begin{matrix}
 -1 \text{ if } F_{t-1} < F_t \\
 +1 \text{ else}
-\end{matrix}\right = D_{t0} - \deriv{R_t}{F_t}$$
+\end{matrix}\right = D_{t_0} - \deriv{R_t}{F_t}$$
 
         \item $$\deriv{F_{t}}{\Theta} = D_t$$
+        \item $$\deriv{U_t}{R_t}=\frac{B_{t-1}-A_{t-1} R_t}{(B_{t-1} - A_{t-1}^2)^{3/2}}$$
         \item $$\deriv{U_{t}}{\Theta} = \sum_{i=1}^t \deriv{U_t}{R_t}\left(\deriv{R_t}{F_t}\deriv{F_{t}}{\Theta} + \deriv{R_t}{F_{t-1}}\deriv{F_{t-1}}{\Theta} \right)$$
     \end{itemize}
-    \item $U$: The stock sharpe ratio % TODO add u stuff
+    
+    
 
 \end{itemize}
 \end{document}
