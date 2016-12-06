@@ -7,50 +7,39 @@ from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 import sys
 
-# theta4 := scalar value for last parameter
-# fprime := scalar containing dot productg
-# scan := standard implementation of scan which gives a moving sum of values
-n = 10
+def fcalc(D_Fprime, theta, F_0):
+    '''
+    D_Fprime : dataframe with D and F' at all data points. Starts with index 1
+    theta    : numpy array of parameters
+    F_0      : value of F at point 0
+    '''
+    N = D_Fprime.count()
+    D_Fprime_forw = D_Fprime.withColumn('F_forw_weight', F.pow(theta[-1], N - F.col('index')))
+    D_Fprime_forw_rev = D_Fprime_forw.withColumn('F_rev_weight', F.pow(theta[-1], F.col('index') - N))
 
-# range_df := dataframe containing [0, n]
-
-
-def fcalc(df, theta, fprime, sqlContext):
-    range_df = sqlContext.range(n + 1).select(F.col('id').alias('index'))
-    #$\theta_4^r
-    #$\theta_4^f
-    theta4fr = range_df.select('index', F.pow(theta[4], n - F.col('index')).alias('f'), F.pow(theta[4], F.col('index') - n).alias('r'))
-
-    # aliasing to join by index
-    theta4fr = theta4fr.alias('theta4fr')
-    fprime = fprime.alias('fprime')
-
-    Fhat = theta4fr.join(fprime, F.col('fprime.index') == F.col('theta4fr.index')).select('fprime.index', 'r', (F.col('fprime.fprime') * F.col('theta4fr.f')).alias('fprimef'))
-
-    # moving average F ; assumes scan is implemented
     w_scan = Window.orderBy('index').rangeBetween(-sys.maxsize, 0)
-    Fhat = Fhat.select('index', ( F.sum('fprimef').over(w_scan) * F.col('r')).alias('Fhat'))
+    D_F = D_Fprime_forw_rev.withColumn('F', F.sum(F.col('Fprime') * F.col('F_forw_weight')).over(w_scan) * F.col('F_rev_weight'))
 
     # take the difference between the value and previous value
     w_lag = Window.orderBy('index').rowsBetween(-1, -1)
-    Fdif = Fhat.select('index', F.col('Fhat').alias('F'), (F.col('Fhat') - F.lag('Fhat', default=0).over(w_lag)).alias('lagF'))
-    return Fdif
+    D_F_Fprev = D_F.withColumn('Fprev', F.lag('F', default=F_0).over(w_lag))
+    return D_F_Fprev
 
 def test():
+    N = 5
+    theta  = [5, 6, 7, 8, 10]
+    columns = ['index', 'D', 'F', 'close', 'open']
+    # dataframe2 := dataframe contains: | i | D[i] | f[i] | close[i] | open[i] | dU[i]/dR[i] for i in [1,n]
+    F_0 = 2
+    fprime = sqlContext.createDataFrame([[i, random.randint(0, 2)] for i in range(1, N)], ['index', 'fprime'])
+    fcalc(fprime, theta, F_0).show()
+    
+if __name__ == "__main__":
     from pyspark import SparkContext
     from pyspark.sql import SQLContext
     import random
 
     sc = SparkContext()
-    sql = SQLContext(sc)
+    sqlContext = SQLContext(sc)
 
-    N = 5
-    theta  = [5, 6, 7, 8, 10]
-    columns = ['index', 'D', 'F', 'close', 'open']
-    # dataframe2 := dataframe contains: | i | D[i] | f[i] | close[i] | open[i] | dU[i]/dR[i] for i in [1,n]
-    df = sql.createDataFrame([[i] + [random.randint(0,4) for _ in range(len(columns) - 1)] for i in range(N)], columns)
-    fprime = sql.createDataFrame([[i,random.randint(0,1)] for i in range(N)], ['index', 'fprime'])
-    fcalc(df, theta, fprime, sql).show()
-    
-if __name__ == "__main__":
     test()

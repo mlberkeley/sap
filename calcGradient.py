@@ -5,7 +5,7 @@ import sys
 import time
 import random
 
-def calcGradient(df, ds_deta):
+def calcGradient(D_F_Fprev_R_dU_dR, dataColumns):
     # These values are needed nowhere else; we don't need to bother computing them
 
     # $$\frac{dU_T}{d\theta}=\sum_{t=1}^T \frac{dU_T}{dR_t} ((\frac{dR_t}{df_t})*(\frac{df_t}{d\theta}) + (\frac{dR_t}{df_{t-1}})*(\frac{df_{t-1}}{d\theta})) $$
@@ -13,28 +13,23 @@ def calcGradient(df, ds_deta):
     # $$dR_t/df_{t-1} = close[t] - open[t] -dR_t/df_t$$
     # $$df_{t-1}/d\theta = D_{t-1}$$
     # $$df_t/d\theta = D_t$$
-    ds_deta = ds_deta.alias('ds_deta')
-    w = Window.orderBy('index').rowsBetween(-1, -1)
+    df_i = D_F_Fprev_R_dU_dR.withColumn('dR_dF', F.signum(F.col('Fprev') - F.col('F')))
+    df_i = df_i.withColumn('dR_dFprev', F.col('close-open') - F.col('dR_dF'))
 
-    df_2 = df.select('index', F.col('D').alias('D_i'), F.lag('D', default=0).over(w).alias('D_i-1'), F.col('F').alias('F_i'), F.lag('F', default=0).over(w).alias('F_i-1'), 'close', 'open')
-    df_2 = df_2.withColumn('dR_dF', F.signum(F.col('F_i-1') - F.col('F_i'))).alias('df_2')
-    df_2 = df_2.join(ds_deta, F.col('ds_deta.index') == F.col('df_2.index')).select(
-                F.col('ds_deta.index').alias('index'),
-                F.col('df_2.D_i').alias('D_i'),
-                F.col('df_2.dR_dF').alias('dR_dF'),
-                F.col('df_2.D_i-1').alias('D_i-1'),
-                F.col('df_2.close').alias('close'),
-                F.col('df_2.open').alias('open'),
-                F.col('ds_deta.ds_deta').alias('dU_dR'),
-                F.col('df_2.F_i').alias('F_i'),
-                F.col('df_2.F_i-1').alias('F_i-1'))
-    dU_dtheta_i = df_2.select('index', (F.col('dU_dR') * (F.col('dR_dF') * F.col('D_i') + (F.col('close') - F.col('open') - F.col('dR_dF')) * F.col('D_i-1'))).alias('dU_dtheta'))
+    df_prev = df_i.alias('df_prev')
+    df_i = df_i.alias('df_i')
 
-    dU_dtheta = dU_dtheta_i.groupBy().sum()
-    # df_2.show()
-    # dU_dtheta_i.show()
-    # dU_dtheta.show()
-    return dU_dtheta
+    derivedColumns = dataColumns + ['F']
+    dU_dColumns = ['dU_d%s' % (column) for column in derivedColumns]
+    df_i_prev = df_i.join(df_prev, F.col('df_i.index') == F.col('df_prev.index') + 1)
+    dU_dtheta = df_i_prev.select('df_i.index', 'df_i.F', 'df_i.A', 'df_i.B', *((F.col('df_i.dU_dR') * (F.col('df_i.dR_dF') * F.col('df_i.%s' % (column)) + F.col('df_i.dR_dFprev') * F.col('df_prev.%s' % (column)))).alias(dU_dColumn) for column, dU_dColumn in zip(derivedColumns, dU_dColumns)))
+
+    summedColumns = ['sum(%s)' % (column) for column in dU_dColumns]
+
+    # next line DOESN'T work for some reason!
+    # dU_dtheta.groupBy().sum(*dU_dColumns), summedColumns
+    groupBy = dU_dtheta.groupBy()
+    return [groupBy.sum(column).collect()[0] for column in dU_dColumns]
 
 def test():
     from pyspark import SparkContext
@@ -48,5 +43,6 @@ def test():
     df = sqlContext.createDataFrame([[i] + [random.randint(0,4) for _ in range(len(columns) - 1)] for i in range(N)], columns)
     ds_deta = sqlContext.createDataFrame([[i,random.randint(0,1)] for i in range(N)], ['index', 'ds_deta'])
     calcGradient(df, ds_deta).show()
+
 if __name__ == "__main__":
     test()
