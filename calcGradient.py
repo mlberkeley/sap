@@ -1,11 +1,10 @@
-
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 import sys
 import time
 import random
 
-def calcGradient(D_F_Fprev_R_dU_dR, dataColumns):
+def calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns):
     # These values are needed nowhere else; we don't need to bother computing them
 
     # $$\frac{dU_T}{d\theta}=\sum_{t=1}^T \frac{dU_T}{dR_t} ((\frac{dR_t}{df_t})*(\frac{df_t}{d\theta}) + (\frac{dR_t}{df_{t-1}})*(\frac{df_{t-1}}{d\theta})) $$
@@ -16,20 +15,27 @@ def calcGradient(D_F_Fprev_R_dU_dR, dataColumns):
     df_i = D_F_Fprev_R_dU_dR.withColumn('dR_dF', F.signum(F.col('Fprev') - F.col('F')))
     df_i = df_i.withColumn('dR_dFprev', F.col('close-open') - F.col('dR_dF'))
 
+    # create a dataframe with the zeroth data point
+    fullColumns = df_i.columns
+    columnMap = {}
+    for i, column in enumerate(dataColumns):
+        columnMap[column] = float(D_0_F[i])
+    columnMap['Fprev'] = float(D_0_F[-1])
+    columnMap['index'] = 0
+    df_0 = sqlContext.createDataFrame([[columnMap.get(column, 0.0) for column in fullColumns]], fullColumns)
+
     df_prev = df_i.alias('df_prev')
+    df_prev = df_prev.union(df_0)
     df_i = df_i.alias('df_i')
 
-    derivedColumns = dataColumns + ['F']
+    derivedColumns = dataColumns + ['Fprev']
     dU_dColumns = ['dU_d%s' % (column) for column in derivedColumns]
-    df_i_prev = df_i.join(df_prev, F.col('df_i.index') == F.col('df_prev.index') + 1)
+
+    df_i_prev = df_i.join(df_prev, F.col('df_i.index') == F.col('df_prev.index') + 1, 'inner')
     dU_dtheta = df_i_prev.select('df_i.index', 'df_i.F', 'df_i.A', 'df_i.B', *((F.col('df_i.dU_dR') * (F.col('df_i.dR_dF') * F.col('df_i.%s' % (column)) + F.col('df_i.dR_dFprev') * F.col('df_prev.%s' % (column)))).alias(dU_dColumn) for column, dU_dColumn in zip(derivedColumns, dU_dColumns)))
 
     summedColumns = ['sum(%s)' % (column) for column in dU_dColumns]
-
-    # next line DOESN'T work for some reason!
-    # dU_dtheta.groupBy().sum(*dU_dColumns), summedColumns
-    groupBy = dU_dtheta.groupBy()
-    return [groupBy.sum(column).collect()[0] for column in dU_dColumns]
+    return dU_dtheta.groupBy().sum(*dU_dColumns), summedColumns
 
 def test():
     from pyspark import SparkContext

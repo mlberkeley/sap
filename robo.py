@@ -36,27 +36,29 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
     # D = D.withColumn('close-open', F.col('close') - F.col('open')).drop('close').drop('open')
     dataColumns = [x for x in D.columns if x != 'index']
     D_Fprime = calcFPrime(D, theta, dataColumns)
+
     D_F_Fprev = fcalc(D_Fprime, theta, F_0)
     D_F_Fprev = D_F_Fprev.select('index', 'F', 'Fprev', *dataColumns) # get rid of useless columns
+
     D_F_Fprev_R = reward(D_F_Fprev, delta)
+
     D_F_Fprev_R_dU_dR = running_averages(D_F_Fprev_R, A_0, B_0, eta)
     D_F_Fprev_R_dU_dR = D_F_Fprev_R_dU_dR.select('index', 'F', 'Fprev', 'R', 'A', 'B', 'dU_dR', *dataColumns)
 
-    dU_dtheta = calcGradient(D_F_Fprev_R_dU_dR, dataColumns)
-    print(dU_dtheta)
-    # dU_dtheta = dU_dtheta.collect()
+    dU_dtheta, summedColumns = calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns)
+    dU_dtheta = dU_dtheta.collect()
 
-    # dU_dtheta = np.array([dU_dtheta[0][column] for column in summedColumns])
-    # theta += rho * dU_dtheta
-    # D_F_Fprev_R_dU_dR.show()
-    # print(theta)
+    dU_dtheta = np.array([dU_dtheta[0][column] for column in summedColumns])
+    theta += rho * dU_dtheta
+    D_F_Fprev_R_dU_dR.show()
+    print(theta)
 
 if __name__ == '__main__':
     sc = SparkContext()
     sqlContext = SQLContext(sc)
 
     d = 5
-    D_0_F = np.zeros((d,), dtype=float)
+    D_0_F = np.array([1, 2, 1, 0, 1], dtype=float)
     F_0 = 0
     A_0 = 0
     B_0 = 1
@@ -65,11 +67,11 @@ if __name__ == '__main__':
     rho = 0.3
 
     theta = np.array([1, 0, 1, 0, 1], dtype=float)
-    D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]] * 2, dtype=float)
+    D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]] * 2000, dtype=float)
 
     D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
 
     df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
-    loop(df, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho)
+    loop(df, np.copy(theta), F_0, D_0_F, A_0, B_0, delta, eta, rho)
     
-    print(get_F_A_B(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho))
+    print(get_F_A_B(D, np.copy(theta), F_0, D_0_F, A_0, B_0, delta, eta, rho))

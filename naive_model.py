@@ -52,7 +52,6 @@ def get_F_A_B(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
         # dS_deta = (B_prev * delta_A_i - 0.5 * A_prev * delta_B_i) / (B_prev - A_prev * A_prev) ** 1.5
         dU_dR_i = (B_prev - A_prev * R_i) / (B_prev - A_prev * A_prev) ** 1.5
         
-
         # calculate dR_dtheta
         dR_dF_i = get_dR_dF(F_i, F_prev)
         dR_dF_prev = get_dR_dF_prev(D_i, dR_dF_i)

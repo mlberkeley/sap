@@ -14,11 +14,12 @@ def fcalc(D_Fprime, theta, F_0):
     F_0      : value of F at point 0
     '''
     N = D_Fprime.count()
-    D_Fprime_forw = D_Fprime.withColumn('F_forw_weight', F.pow(theta[-1], N - F.col('index')))
-    D_Fprime_forw_rev = D_Fprime_forw.withColumn('F_rev_weight', F.pow(theta[-1], F.col('index') - N))
+    df = D_Fprime.withColumn('F_forw_weight', F.pow(theta[-1], N - F.col('index')))
+    df = df.withColumn('F_rev_weight', F.pow(theta[-1], F.col('index') - N))
+    df = df.withColumn('F_0_weight', F.pow(theta[-1], F.col('index')))
 
     w_scan = Window.orderBy('index').rangeBetween(-sys.maxsize, 0)
-    D_F = D_Fprime_forw_rev.withColumn('F', F.sum(F.col('Fprime') * F.col('F_forw_weight')).over(w_scan) * F.col('F_rev_weight'))
+    D_F = df.withColumn('F', F.col('F_0_weight') * F_0 + F.sum(F.col('Fprime') * F.col('F_forw_weight')).over(w_scan) * F.col('F_rev_weight'))
 
     # take the difference between the value and previous value
     w_lag = Window.orderBy('index').rowsBetween(-1, -1)
