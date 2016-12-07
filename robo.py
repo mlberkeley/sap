@@ -50,8 +50,13 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
 
     dU_dtheta = np.array([dU_dtheta[0][column] for column in summedColumns])
     theta += rho * dU_dtheta
-    D_F_Fprev_R_dU_dR.show()
-    print(theta)
+    output = D_F_Fprev_R_dU_dR.where(F.col('index') == D.count()).select('F', 'A', 'B', 'Fprev', *dataColumns).collect()
+    row = output[0]
+    F_0_new = row['F']
+    A_0_new = row['A']
+    B_0_new = row['B']
+    D_0_F_new = np.array([row[column] for column in dataColumns + ['Fprev']], dtype=float)
+    return theta, F_0_new, D_0_F_new, A_0_new, B_0_new
 
 if __name__ == '__main__':
     sc = SparkContext()
@@ -67,11 +72,14 @@ if __name__ == '__main__':
     rho = 0.3
 
     theta = np.array([1, 0, 1, 0, 1], dtype=float)
-    D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]] * 2000, dtype=float)
+    D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]], dtype=float)
 
     D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
 
     df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
-    loop(df, np.copy(theta), F_0, D_0_F, A_0, B_0, delta, eta, rho)
-    
-    print(get_F_A_B(D, np.copy(theta), F_0, D_0_F, A_0, B_0, delta, eta, rho))
+
+    theta_spark = np.copy(theta)
+    theta_python = np.copy(theta)
+
+    print(loop(df, theta_spark, F_0, D_0_F, A_0, B_0, delta, eta, rho))
+    print(get_F_A_B(D, theta_python, F_0, D_0_F, A_0, B_0, delta, eta, rho))

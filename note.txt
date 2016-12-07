@@ -1,0 +1,23 @@
+bash export AWS_SECRET_ACCESS_KEY=$$$ export AWS_ACCESS_KEY_ID=$$$ ./spark-ec2 --key-pair=mlab --identity-file=$$$.pem --region=us-east-1 --zone=us-east-1b --vpc-id=vpc-6ac3fc0d --subnet-id=subnet-1389345a --spark-version=1.5.2 -s 1 --instance-type=m3.large launch spark_cluster
+
+/usr/hdp/current/spark-client/ec2/
+
+spark-submit --class org.apache.spark.examples.SparkPi     --master yarn     --de
+ploy-mode cluster     --driver-memory 4g     --executor-memory 2g     --executor-cores 1        lib/spark-examples*.jar
+     10
+
+
+export HADOOP_USER_NAME=hdfs
+spark-submit --master yarn-cluster ec2.py cnn train-small 500
+
+spark-submit --master yarn --num-executors 1 --driver-memory 4g --executor-memory 4g spark.py nn 500
+
+
+ln -s /var/lib/ambari-agent/cache/stacks/HDP/2.3/services/vora-base/package/lib/vora-spark/ vora
+export PYTHONPATH=/home/vora/vora/python:$SPARK_HOME/python
+export ADD_JARS=/home/vora/vora/lib/spark-sap-datasources-1.2.33-assembly.jar
+export SPARK_CLASSPATH=$ADD_JARS
+export PYSPARK_SUBMIT_ARGS="--master yarn-client --jars $ADD_JARS pyspark-shell"
+
+from pyspark_vora.sql import SapSQLContext
+sqlContext = SapSQLContext(sc)
