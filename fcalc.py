@@ -24,7 +24,7 @@ def fcalc(sqlContext, D_Fprime, theta, dataColumns, F_0):
     D_F = df.withColumn('F', F.col('F_0_weight') * F_0 + F.col('Fprime_weighted_scan') * F.col('F_rev_weight'))
 
     Fprev = D_F.select((F.col('index') + 1).alias('index'), F.col('F').alias('Fprev'))
-    Fprev = Fprev.union(sqlContext.createDataFrame([(0 + 1, F_0)], schema=Fprev.schema))
+    Fprev = Fprev.unionAll(sqlContext.createDataFrame([(0 + 1, F_0)], schema=Fprev.schema))
 
     D_F_Fprev = D_F.join(Fprev, 'index', 'inner')
     return D_F_Fprev
@@ -37,7 +37,7 @@ def test():
     F_0 = 2
     fprime = sqlContext.createDataFrame([[i, random.randint(0, 2)] for i in range(1, N)], ['index', 'fprime'])
     fcalc(fprime, theta, F_0).show()
-    
+
 if __name__ == "__main__":
     from pyspark import SparkContext
     from pyspark.sql import SQLContext

@@ -14,7 +14,7 @@ def scan_mappy(lst):
 
 def scan_sequential(sqlContext, df, scan_column, scan_result_column):
     rows = df.select('index', scan_column).collect()
-    content = [(row['index'], row[scan_column]) for row in rows]
+    content = [(row.asDict()['index'], row.asDict()[scan_column]) for row in rows]
     content.sort()
     indices, values = zip(*content)
     s = 0
@@ -49,7 +49,7 @@ def scan_parallel(sqlContext, df, scan_column, scan_result_column):
         df_scan = df_scan.select((F.col('even.index') / 2).astype(T.IntegerType()).alias('index'), \
                      (F.col('even.subsum') + F.col('odd.subsum')).alias('subsum'), \
                      merge_arrays_udf(F.col('odd.subarray'), F.col('even.subarray')).alias('subarray'))
-    
+
     scan_array = df_scan.collect()[0]['subarray']
     scans = sqlContext.createDataFrame(((i + 1, x) for i, x in enumerate(scan_array)), ['index', scan_result_column])
 

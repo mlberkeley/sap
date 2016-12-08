@@ -24,7 +24,7 @@ def calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns):
 
     df_prev = df_i.alias('df_prev')
     df_0 = sqlContext.createDataFrame([[columnMap.get(column, 0.0) for column in fullColumns]], schema=df_prev.schema)
-    df_prev = df_prev.union(df_0)
+    df_prev = df_prev.unionAll(df_0)
     df_i = df_i.alias('df_i')
 
     derivedColumns = dataColumns + ['Fprev']
