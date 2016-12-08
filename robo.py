@@ -41,7 +41,7 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
 
     D_F_Fprev_R = reward(D_F_Fprev, delta)
 
-    D_F_Fprev_R_dU_dR = running_averages(D_F_Fprev_R, A_0, B_0, eta)
+    D_F_Fprev_R_dU_dR = running_averages(sqlContext, D_F_Fprev_R, A_0, B_0, eta)
     D_F_Fprev_R_dU_dR = D_F_Fprev_R_dU_dR.select('index', 'F', 'Fprev', 'R', 'A', 'B', 'dU_dR', *dataColumns)
 
     dU_dtheta, summedColumns = calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns)
