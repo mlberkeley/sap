@@ -14,6 +14,7 @@ from fprime import calcFPrime
 from fcalc import fcalc
 from running_averages import running_averages
 from calcGradient import calcGradient
+from createdata import load_data
 
 from naive_model import get_F_A_B
 
@@ -47,14 +48,14 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
     dU_dtheta, summedColumns = calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns)
     dU_dtheta = dU_dtheta.collect()
 
-    dU_dtheta = np.array([dU_dtheta[0][column] for column in summedColumns])
+    dU_dtheta = np.array([dU_dtheta[0].asDict()[column] for column in summedColumns])
     theta += rho * dU_dtheta
     output = D_F_Fprev_R_dU_dR.where(F.col('index') == D.count()).select('F', 'A', 'B', 'Fprev', *dataColumns).collect()
-    row = output[0]
-    F_0_new = row['F']
-    A_0_new = row['A']
-    B_0_new = row['B']
-    D_0_F_new = np.array([row[column] for column in dataColumns + ['Fprev']], dtype=float)
+    row = output[1]
+    F_0_new = row.asDict()['F']
+    A_0_new = row.asDict()['A']
+    B_0_new = row.asDict()['B']
+    D_0_F_new = np.array([row.asDict()[column] for column in dataColumns + ['Fprev']], dtype=float)
     return theta, F_0_new, D_0_F_new, A_0_new, B_0_new
 
 if __name__ == '__main__':
@@ -63,10 +64,9 @@ if __name__ == '__main__':
 
     d = 5
     D_0_F = np.array([1.0, 2.0, 1.0, 0.0, 1.0], dtype=float)
-    F_0 = A_0 = B_0 = 0.0
-    # F_0 = 0.0
-    # A_0 = 0.0
-    # B_0 = 1.0
+    F_0 = 0.0
+    A_0 = 0.0
+    B_0 = 1.0
     delta = 0.1
     eta = 0.2
     rho = 0.3
@@ -74,10 +74,10 @@ if __name__ == '__main__':
     theta = np.array([1, 0, 1, 0, 1], dtype=float)
     D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]], dtype=float)
 
-    D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
+    # D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
 
-    df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
-
+    # df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
+    df = load_data(sqlContext,"/Users/philkuz/projects/mlab/sap/StockData.db")
     theta_spark = np.copy(theta)
     theta_python = np.copy(theta)
 
