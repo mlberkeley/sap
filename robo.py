@@ -8,7 +8,7 @@ from pyspark import SparkContext
 
 import sys
 import numpy as np
-
+import math
 from scan_reward import reward
 from fprime import calcFPrime
 from fcalc import fcalc
@@ -51,7 +51,7 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
     dU_dtheta = np.array([dU_dtheta[0].asDict()[column] for column in summedColumns])
     theta += rho * dU_dtheta
     output = D_F_Fprev_R_dU_dR.where(F.col('index') == D.count()).select('F', 'A', 'B', 'Fprev', *dataColumns).collect()
-    row = output[1]
+    row = output[0]
     F_0_new = row.asDict()['F']
     A_0_new = row.asDict()['A']
     B_0_new = row.asDict()['B']
@@ -81,5 +81,13 @@ if __name__ == '__main__':
     theta_spark = np.copy(theta)
     theta_python = np.copy(theta)
 
-    print(loop(df, theta_spark, F_0, D_0_F, A_0, B_0, delta, eta, rho))
-    print(get_F_A_B(D, theta_python, F_0, D_0_F, A_0, B_0, delta, eta, rho))
+    theta, F, D, A, B = loop(df, theta_spark, F_0, D_0_F, A_0, B_0, delta, eta, rho)
+    # print(get_F_A_B(D, theta_python, F_0, D_0_F, A_0, B_0, delta, eta, rho))
+    print("Params:",theta, F, D, A, B)
+    sharpe_score = A / math.sqrt(B - A)
+    if F > 0:
+        decision = "buy"
+    else:
+        decision = "not buy"
+
+    print("You should {} with F={} and Sharpe_score={}".format(decision, F, sharpe_score))

@@ -10,7 +10,7 @@ def load_data(sqlContext, file_path=None):
     c = conn.cursor()
     # c.execute("Create Index on StockData")
     # result = c.execute("SELECT ROW_NUMBER() OVER(ORDER BY Date) AS RowNumber, Close - Open as D0, Low as D1, High as D2, Volume as D3 FROM StockData WHERE Symbol == AA")
-    result = c.execute("SELECT id, Close - Open as D0, Low as D1, High as D2, Volume as D3 FROM StockData WHERE Symbol='AA'")
+    result = c.execute("SELECT id, Close - Open as D0, Low as D1, High as D2, Volume as D3 FROM StockData WHERE Symbol='AA' LIMIT 200")
     data = [r for r in result]
 
     df = sqlContext.createDataFrame(data, ['index', 'close-open', 'low', 'high', 'volume'])
