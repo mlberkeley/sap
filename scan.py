@@ -12,6 +12,17 @@ def scan_mappy(lst):
         z=list(map(lambda x: (x[0][0]+list(map( lambda y:y+x[0][1], x[1][0])), x[0][1]+x[1][1]) ,zg))
     return z[0][0]
 
+def scan_sequential(sqlContext, df, scan_column, scan_result_column):
+    rows = df.select('index', scan_column).collect()
+    content = [(row['index'], row[scan_column]) for row in rows]
+    content.sort()
+    indices, values = zip(*content)
+    scan = scan_mappy(values)
+    indexed_scans = zip(indices, scan)
+    df_scan = sqlContext.createDataFrame(indexed_scans, ['index', scan_result_column])
+    df = df.join(df_scan, df.index == df_scan.index).drop(df_scan.index)
+    return df
+
 from pyspark.sql import functions as F, types as T
 
 def merge_arrays(front_array, back_array):
@@ -53,6 +64,6 @@ if __name__ == '__main__':
     scan_column = 'x'
     result_column = 'x_sum'
     df = sqlContext.createDataFrame([[i + 1, float(i + 1)] for i in range(n)], ['index', 'x'])
-    df.show()
-    scan_parallel(sqlContext, df, scan_column, result_column).show()
-    print(scan_mappy([1, 2, 3, 4, 5, 6, 7]))
+    scan_sequential(sqlContext, df, scan_column, result_column).show()
+    # print(scan_mappy([1, 2, 3, 4, 5, 6, 7]))
+    # scan_parallel(sqlContext, df, scan_column, result_column).show()
