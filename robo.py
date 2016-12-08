@@ -5,7 +5,6 @@
 
 from pyspark.sql import SQLContext, functions as F
 from pyspark import SparkContext
-from pyspark.sql.window import Window
 
 import sys
 import numpy as np
@@ -37,7 +36,7 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
     dataColumns = [x for x in D.columns if x != 'index']
     D_Fprime = calcFPrime(D, theta, dataColumns)
 
-    D_F_Fprev = fcalc(D_Fprime, theta, F_0)
+    D_F_Fprev = fcalc(sqlContext, D_Fprime, theta, dataColumns, F_0)
     D_F_Fprev = D_F_Fprev.select('index', 'F', 'Fprev', *dataColumns) # get rid of useless columns
 
     D_F_Fprev_R = reward(D_F_Fprev, delta)
@@ -63,10 +62,10 @@ if __name__ == '__main__':
     sqlContext = SQLContext(sc)
 
     d = 5
-    D_0_F = np.array([1, 2, 1, 0, 1], dtype=float)
-    F_0 = 0
-    A_0 = 0
-    B_0 = 1
+    D_0_F = np.array([1.0, 2.0, 1.0, 0.0, 1.0], dtype=float)
+    F_0 = 0.0
+    A_0 = 0.0
+    B_0 = 1.0
     delta = 0.1
     eta = 0.2
     rho = 0.3

@@ -4,10 +4,10 @@ Authors: Phillip Kuznetsov, Zhonxia Yan (Z)
 '''
 
 from pyspark.sql import functions as F
-from pyspark.sql.window import Window
+from scan import scan_sequential
 import sys
 
-def fcalc(D_Fprime, theta, F_0):
+def fcalc(sqlContext, D_Fprime, theta, dataColumns, F_0):
     '''
     D_Fprime : dataframe with D and F' at all data points. Starts with index 1
     theta    : numpy array of parameters
@@ -18,12 +18,15 @@ def fcalc(D_Fprime, theta, F_0):
     df = df.withColumn('F_rev_weight', F.pow(theta[-1], F.col('index') - N))
     df = df.withColumn('F_0_weight', F.pow(theta[-1], F.col('index')))
 
-    w_scan = Window.orderBy('index').rangeBetween(-sys.maxsize, 0)
-    D_F = df.withColumn('F', F.col('F_0_weight') * F_0 + F.sum(F.col('Fprime') * F.col('F_forw_weight')).over(w_scan) * F.col('F_rev_weight'))
+    df = df.withColumn('Fprime_weighted', F.col('Fprime') * F.col('F_forw_weight'))
 
-    # take the difference between the value and previous value
-    w_lag = Window.orderBy('index').rowsBetween(-1, -1)
-    D_F_Fprev = D_F.withColumn('Fprev', F.lag('F', default=F_0).over(w_lag))
+    df = scan_sequential(sqlContext, df, 'Fprime_weighted', 'Fprime_weighted_scan')
+    D_F = df.withColumn('F', F.col('F_0_weight') * F_0 + F.col('Fprime_weighted_scan') * F.col('F_rev_weight'))
+
+    Fprev = D_F.select((F.col('index') + 1).alias('index'), F.col('F').alias('Fprev'))
+    Fprev = Fprev.union(sqlContext.createDataFrame([(0 + 1, F_0)], schema=Fprev.schema))
+
+    D_F_Fprev = D_F.join(Fprev, 'index', 'inner')
     return D_F_Fprev
 
 def test():

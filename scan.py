@@ -17,7 +17,11 @@ def scan_sequential(sqlContext, df, scan_column, scan_result_column):
     content = [(row['index'], row[scan_column]) for row in rows]
     content.sort()
     indices, values = zip(*content)
-    scan = scan_mappy(values)
+    s = 0
+    scan = []
+    for v in values:
+        s += v
+        scan.append(s)
     indexed_scans = zip(indices, scan)
     df_scan = sqlContext.createDataFrame(indexed_scans, ['index', scan_result_column])
     df = df.join(df_scan, df.index == df_scan.index).drop(df_scan.index)

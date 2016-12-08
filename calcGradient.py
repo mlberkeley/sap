@@ -1,5 +1,4 @@
 from pyspark.sql import functions as F
-from pyspark.sql.window import Window
 import sys
 import time
 import random
@@ -22,9 +21,9 @@ def calcGradient(sqlContext, D_F_Fprev_R_dU_dR, D_0_F, dataColumns):
         columnMap[column] = float(D_0_F[i])
     columnMap['Fprev'] = float(D_0_F[-1])
     columnMap['index'] = 0
-    df_0 = sqlContext.createDataFrame([[columnMap.get(column, 0.0) for column in fullColumns]], fullColumns)
 
     df_prev = df_i.alias('df_prev')
+    df_0 = sqlContext.createDataFrame([[columnMap.get(column, 0.0) for column in fullColumns]], schema=df_prev.schema)
     df_prev = df_prev.union(df_0)
     df_i = df_i.alias('df_i')
 
