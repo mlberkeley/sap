@@ -3,7 +3,7 @@
 
 # In[1]:
 
-from pyspark.sql import SQLContext, functions as F
+from pyspark.sql import SQLContext, functions as Func
 from pyspark import SparkContext
 
 import sys
@@ -33,7 +33,7 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
     eta   : decay rate for running averages A and B
     rho   : update rate for theta
     '''
-    # D = D.withColumn('close-open', F.col('close') - F.col('open')).drop('close').drop('open')
+    # D = D.withColumn('close-open', Func.col('close') - Func.col('open')).drop('close').drop('open')
     dataColumns = [x for x in D.columns if x != 'index']
     D_Fprime = calcFPrime(D, theta, dataColumns)
 
@@ -50,7 +50,7 @@ def loop(D, theta, F_0, D_0_F, A_0, B_0, delta, eta, rho):
 
     dU_dtheta = np.array([dU_dtheta[0].asDict()[column] for column in summedColumns])
     theta += rho * dU_dtheta
-    output = D_F_Fprev_R_dU_dR.where(F.col('index') == D.count()).select('F', 'A', 'B', 'Fprev', *dataColumns).collect()
+    output = D_F_Fprev_R_dU_dR.where(Func.col('index') == D.count()).select('F', 'A', 'B', 'Fprev', *dataColumns).collect()
     row = output[0]
     F_0_new = row.asDict()['F']
     A_0_new = row.asDict()['A']
