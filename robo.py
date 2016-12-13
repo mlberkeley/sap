@@ -78,7 +78,7 @@ if __name__ == '__main__':
     # D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
 
     # df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
-    df = load_data(sqlContext,"StockData.db")
+    df = load_data(sqlContext,"aaData.db")
     theta_spark = np.copy(theta)
     theta_python = np.copy(theta)
     theta = theta_spark
