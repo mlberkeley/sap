@@ -70,6 +70,7 @@ if __name__ == '__main__':
     delta = 0.1
     eta = 0.2
     rho = 0.3
+    iterations = 10
 
     theta = np.array([1, 0, 1, 0, 1], dtype=float)
     D = np.array([[2, 3, 4, 5], [3, 4, 5, 6]], dtype=float)
@@ -77,11 +78,17 @@ if __name__ == '__main__':
     # D2 = [[i + 1] + [float(x) for x in arr] for i, arr in enumerate(D)]
 
     # df = sqlContext.createDataFrame(D2, ['index', 'close-open', 'low', 'high', 'volume'])
-    df = load_data(sqlContext,"/Users/philkuz/projects/mlab/sap/StockData.db")
+    df = load_data(sqlContext,"StockData.db")
     theta_spark = np.copy(theta)
     theta_python = np.copy(theta)
+    theta = theta_spark
+    F = F_0
+    D = D_0_F
+    A = A_0
+    B = B_0
+    for i in range(iterations):
+        theta, F, D, A, B = loop(df, theta, F, D, A, B, delta, eta, rho)
 
-    theta, F, D, A, B = loop(df, theta_spark, F_0, D_0_F, A_0, B_0, delta, eta, rho)
     # print(get_F_A_B(D, theta_python, F_0, D_0_F, A_0, B_0, delta, eta, rho))
     print("Params:",theta, F, D, A, B)
     sharpe_score = A / math.sqrt(B - A)
